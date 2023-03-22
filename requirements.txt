@@ -1,0 +1,7 @@
+opencv-python
+Flask
+numpy
+socketio
+Flask-SocketIO
+eventlet
+waitress
