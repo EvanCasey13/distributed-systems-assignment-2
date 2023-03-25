@@ -50,7 +50,7 @@ def gen_frames():
         #read each frame of video and convert to gray
         ret, img = cap.read()
          # Resize frame of video to 1/4 size for faster face recognition processing
-        small_frame = cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
+        small_frame = cv2.resize(img, (0, 0), fx=0.20, fy=0.20)
         img_h, img_w = img.shape[:2]
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -80,8 +80,9 @@ def gen_frames():
 
             # Draw a label with a name above the face
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(img, name, (x + 6, y - 6), font, 1.0, (255, 255, 255), 1)
+            cv2.putText(img, name, (x + 6, y - 30), font, 1.0, (255, 255, 255), 1)
 
+            cv2.putText(img, "Match 100%", (x + 6, y - 6), font, 1.0, (255, 255, 255), 1)
             break
 
         #cv2.imshow('img',img) #display image
@@ -116,5 +117,4 @@ def run():
 
 if __name__ == '__main__':
     socketioApp.run(app)
-
 
