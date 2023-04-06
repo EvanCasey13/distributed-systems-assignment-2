@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 import cv2
 import numpy as np
 import face_recognition
+from threading import Thread
 
 app = Flask(__name__)
 socketioApp = SocketIO(app)
@@ -40,16 +41,11 @@ face_encodings = []
 face_names = []
 process_this_frame = True
 
-def gen_frames():
-
-    #get image classifiers
-    face_cascade = cv2.CascadeClassifier('HaarCascades/haarcascade_frontalface_default.xml')
-    #eye_cascade = cv2.CascadeClassifier(path +'haarcascade_eye.xml')
-
-    while True:
-        #read each frame of video and convert to gray
-        ret, img = cap.read()
-         # Resize frame of video to 1/4 size for faster face recognition processing
+def facial_model(img): 
+        #get image classifiers
+        face_cascade = cv2.CascadeClassifier('HaarCascades/haarcascade_frontalface_default.xml')
+        #eye_cascade = cv2.CascadeClassifier(path +'haarcascade_eye.xml')
+        # Resize frame of video to 1/4 size for faster face recognition processing
         small_frame = cv2.resize(img, (0, 0), fx=0.20, fy=0.20)
         img_h, img_w = img.shape[:2]
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
@@ -80,10 +76,18 @@ def gen_frames():
 
             # Draw a label with a name above the face
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(img, name, (x + 6, y - 30), font, 1.0, (255, 255, 255), 1)
+            cv2.putText(img, "name", (x + 6, y - 30), font, 1.0, (255, 255, 255), 1)
 
             cv2.putText(img, "Match 100%", (x + 6, y - 6), font, 1.0, (255, 255, 255), 1)
             break
+
+def gen_frames():
+    while True:
+        #read each frame of video and convert to gray
+        ret, img = cap.read()
+
+        fModel_thread = Thread(target=facial_model(img), args=())
+        fModel_thread.start()
 
         #cv2.imshow('img',img) #display image
         ret, buffer = cv2.imencode('.jpg', img)
@@ -117,4 +121,9 @@ def run():
 
 if __name__ == '__main__':
     socketioApp.run(app)
+
+genF_thread = Thread(target=gen_frames, args=())
+genF_thread.start()
+
+
 
