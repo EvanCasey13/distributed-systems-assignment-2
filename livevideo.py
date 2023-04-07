@@ -4,7 +4,6 @@ from flask_socketio import SocketIO
 import cv2
 import numpy as np
 import face_recognition
-from threading import Thread
 
 app = Flask(__name__)
 socketioApp = SocketIO(app)
@@ -39,14 +38,22 @@ known_face_names = [
 face_locations = []
 face_encodings = []
 face_names = []
-process_this_frame = True
 
-def facial_model(img): 
-        #get image classifiers
-        face_cascade = cv2.CascadeClassifier('HaarCascades/haarcascade_frontalface_default.xml')
-        #eye_cascade = cv2.CascadeClassifier(path +'haarcascade_eye.xml')
-        # Resize frame of video to 1/4 size for faster face recognition processing
-        small_frame = cv2.resize(img, (0, 0), fx=0.20, fy=0.20)
+def gen_frames():
+    process_this_frame = True
+    #get image classifiers
+    face_cascade = cv2.CascadeClassifier('HaarCascades/haarcascade_frontalface_default.xml')
+    #eye_cascade = cv2.CascadeClassifier(path +'haarcascade_eye.xml')
+
+    while True:
+        #read each frame of video and convert to gray
+        ret, img = cap.read()
+
+        # Only process every other frame of video to save time
+        if process_this_frame:
+
+         # Resize frame of video to 1/4 size for faster face recognition processing
+         small_frame = cv2.resize(img, (0, 0), fx=0.25, fy=0.25)
         img_h, img_w = img.shape[:2]
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
@@ -69,25 +76,23 @@ def facial_model(img):
                     name = known_face_names[best_match_index]
 
                 face_names.append(name)
+
+                process_this_frame = not process_this_frame
             
-        for (x,y,w,h) in faces:
+        for (x,y,w,h), name in zip(face_locations, face_names):
+            x *= 4
+            y *= 4
+            w *= 4
+            h *= 4
             #retangle for testing purposes
-            img = cv2.rectangle(img,(x,y),(x+w,y+h),(255,0,0),2)
+            cv2.rectangle(img,(h,x),(y,w),(255,0,0),2)
 
             # Draw a label with a name above the face
             font = cv2.FONT_HERSHEY_DUPLEX
-            cv2.putText(img, "name", (x + 6, y - 30), font, 1.0, (255, 255, 255), 1)
+            cv2.putText(img, name, (h + 5 , x - 35), font, 1.0, (255, 255, 255), 1)
 
-            cv2.putText(img, "Match 100%", (x + 6, y - 6), font, 1.0, (255, 255, 255), 1)
+            cv2.putText(img, "Match 100%", (h, x - 10), font, 1.0, (255, 255, 255), 1)
             break
-
-def gen_frames():
-    while True:
-        #read each frame of video and convert to gray
-        ret, img = cap.read()
-
-        fModel_thread = Thread(target=facial_model(img), args=())
-        fModel_thread.start()
 
         #cv2.imshow('img',img) #display image
         ret, buffer = cv2.imencode('.jpg', img)
@@ -121,9 +126,3 @@ def run():
 
 if __name__ == '__main__':
     socketioApp.run(app)
-
-genF_thread = Thread(target=gen_frames, args=())
-genF_thread.start()
-
-
-
