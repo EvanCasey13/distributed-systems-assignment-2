@@ -4,6 +4,7 @@ from flask_socketio import SocketIO
 import cv2
 import numpy as np
 import face_recognition
+from threading import Thread
 
 app = Flask(__name__)
 socketioApp = SocketIO(app)
@@ -39,17 +40,9 @@ face_locations = []
 face_encodings = []
 face_names = []
 
-def gen_frames():
-    process_this_frame = True
-    #get image classifiers
-    face_cascade = cv2.CascadeClassifier('HaarCascades/haarcascade_frontalface_default.xml')
-    #eye_cascade = cv2.CascadeClassifier(path +'haarcascade_eye.xml')
-
-    while True:
-        #read each frame of video and convert to gray
-        ret, img = cap.read()
-
-        # Only process every other frame of video to save time
+def face_model(img):
+        process_this_frame = True
+ # Only process every other frame of video to save time
         if process_this_frame:
 
          # Resize frame of video to 1/4 size for faster face recognition processing
@@ -57,8 +50,6 @@ def gen_frames():
         img_h, img_w = img.shape[:2]
         gray = cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
 
-        #find faces in image using classifier
-        faces = face_cascade.detectMultiScale(gray, 1.3, 5)
         ##print(len(faces)) ##Check amount of faces on screen
         #for every face found:
         # Find all the faces and face encodings in the current frame of video
@@ -94,6 +85,14 @@ def gen_frames():
             cv2.putText(img, "Match 100%", (h, x - 10), font, 1.0, (255, 255, 255), 1)
             break
 
+def gen_frames():
+    while True:
+        #read each frame of video and convert to gray
+        ret, img = cap.read()
+
+        fModel_thread = Thread(target=face_model(img), args=())
+        fModel_thread.start()
+
         #cv2.imshow('img',img) #display image
         ret, buffer = cv2.imencode('.jpg', img)
         img = buffer.tobytes()
@@ -126,3 +125,6 @@ def run():
 
 if __name__ == '__main__':
     socketioApp.run(app)
+
+genF_thread = Thread(target=gen_frames, args=())
+genF_thread.start()
