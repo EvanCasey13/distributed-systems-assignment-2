@@ -1,6 +1,8 @@
 import eventlet
 from livevideo import app
 import socketio
+from waitress import serve
+from livevideo import run
 
 sio = socketio.Server()
 appServer = socketio.WSGIApp(sio, app)
@@ -18,5 +20,5 @@ def disconnect(sid):
     print('disconnect ', sid)
 
 if __name__ == '__main__':
-    eventlet.wsgi.server(eventlet.listen(('localhost', 5000)), appServer)
+    serve(app=app, host='0.0.0.0', port=5000, url_scheme='http', threads=6)
 
